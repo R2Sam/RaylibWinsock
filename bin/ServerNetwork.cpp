@@ -109,20 +109,20 @@ char * Network::ReceivePacket(int index)
     // Receive
     //Log("--Receive--");
 
-    char* buffer = new char[packetSize + 1];
+    char* buffer = new char[maxPacketSize + 1];
 
     int bytesRecv;
 
     {
         std::lock_guard<std::mutex> lock(clientsMutex);
 
-        bytesRecv = recv(clients[index].Socket, buffer, packetSize, 0);
+        bytesRecv = recv(clients[index].Socket, buffer, maxPacketSize, 0);
     }
     
     if (bytesRecv > 0)
     {
         // Check if the received packet exceeds the buffer size
-        if (bytesRecv > packetSize)
+        if (bytesRecv > maxPacketSize)
         {
             // Handle client
             Disconnect(index, "Packet exceeds buffer size");
@@ -132,7 +132,11 @@ char * Network::ReceivePacket(int index)
 
         //
         buffer[bytesRecv] = '\0';
-        Log("Bytes received: "<< bytesRecv << std::endl << "Client: " << clients[index].Socket << " : " << buffer);
+        {
+            std::lock_guard<std::mutex> lock(clientsMutex);
+
+            Log("Bytes received: "<< bytesRecv << std::endl << "Client: " << clients[index].Socket);
+        }
         return buffer;
     }
     else
@@ -215,7 +219,7 @@ void Network::HandleClient(SOCKET clientSocket)
     clients[clientIndex].Socket = clientSocket;
 
     char packetMsg [4095];
-    std::sprintf(packetMsg, "%d", packetSize);
+    std::sprintf(packetMsg, "%d", maxPacketSize);
     SendPacket(clientSocket, packetMsg, sizeof(packetMsg) + 1);
     
     // Send recieved packet to all users except client
@@ -228,19 +232,23 @@ void Network::HandleClient(SOCKET clientSocket)
 
         // Check if header is ping
         char* headerDescription = unpackDescription(message);
-
-        if (headerDescription[12] = 9)
+        
+        if (headerDescription[11] == '9')
         {
-            SendPacket(clientSocket, message, strlen(message) + 1);
+            Log("Client: " << clientSocket << " requested ping");
+            SendPacket(clientSocket, message, unpackSize(message) + 1);
             continue;
         }
-
+        
         {
             std::lock_guard<std::mutex> lock(clientsMutex);
 
-            // Send packet to all except client
-            for (int i = 0; i <= clients.size() -1; i++)
-                SendPacket(clients[i].Socket, message, strlen(message) + 1);
+            // Send packet to all except client if multiple clients
+            if(clients.size() > 1)
+            {
+                for (int i = 0; i <= clients.size() -1; i++)
+                SendPacket(clients[i].Socket, message, unpackSize(message) + 1);
+            }
         }
     }
 

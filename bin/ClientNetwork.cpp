@@ -67,6 +67,8 @@ bool Network::Connect(std::string ip, unsigned int port)
         // Get packet size as first server msg
         maxPacketSize = std::stoi(ReceivePacket());
 
+        Log("Max packet size from server: " << maxPacketSize);
+
         return true;
     }
 }
@@ -156,9 +158,9 @@ bool Network::Send(char* buffer, bool deleteFlag)
     bool result;
 
     // Input buffer size
-    int size = strlen(buffer);
+    int size = unpackSize(buffer);
 
-    result = SendPacket(buffer, (int)size);
+    result = SendPacket(buffer, size);
 
     if (deleteFlag)
         delete[] buffer;
@@ -169,31 +171,26 @@ bool Network::Send(char* buffer, bool deleteFlag)
 bool Network::Receive(char* buffer)
 {
     // Receive and check if nullptr
-    char* tempBuffer = ReceivePacket();
-    if (tempBuffer == nullptr)
+    char* receiveBuffer = ReceivePacket();
+    if (receiveBuffer == nullptr)
         return false;
 
-    // Get size and check
-    size_t size = strlen(tempBuffer);
-    if (size >= maxPacketSize)
-    {
-        delete[] tempBuffer;
-        return false;
-    }
+    // Get size
+    int size = unpackSize(receiveBuffer);
 
     // Check if input buffer is large enough
     if (strlen(buffer) <= size)
         {
-        delete[] tempBuffer;
+        delete[] receiveBuffer;
         return false;
         }
 
     // Copy and delete
-    strcpy_s(buffer, size, tempBuffer);
+    strcpy_s(buffer, size, receiveBuffer);
 
     // Add nullbyte
     buffer[size] = '\0';
 
-    delete[] tempBuffer;
+    delete[] receiveBuffer;
     return true;
 }
