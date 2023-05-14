@@ -226,6 +226,15 @@ void Network::HandleClient(SOCKET clientSocket)
         if (message == nullptr)
             return;
 
+        // Check if header is ping
+        char* headerDescription = unpackDescription(message);
+
+        if (headerDescription[12] = 9)
+        {
+            SendPacket(clientSocket, message, strlen(message) + 1);
+            continue;
+        }
+
         {
             std::lock_guard<std::mutex> lock(clientsMutex);
 
