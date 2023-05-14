@@ -130,7 +130,7 @@ char* Network::ReceivePacket()
 	if (bytesRecv > 0)
     {
         // Check if the received packet exceeds the buffer size
-        if (bytesRecv >= packetSize)
+        if (bytesRecv > packetSize)
         {
             delete[] buffer;
             return nullptr;

@@ -122,7 +122,7 @@ char * Network::ReceivePacket(int index)
     if (bytesRecv > 0)
     {
         // Check if the received packet exceeds the buffer size
-        if (bytesRecv >= packetSize)
+        if (bytesRecv > packetSize)
         {
             // Handle client
             Disconnect(index, "Packet exceeds buffer size");
@@ -214,7 +214,7 @@ void Network::HandleClient(SOCKET clientSocket)
     // Store client info
     clients[clientIndex].Socket = clientSocket;
 
-    char packetMsg [4096];
+    char packetMsg [4095];
     std::sprintf(packetMsg, "%d", packetSize);
     SendPacket(clientSocket, packetMsg, sizeof(packetMsg) + 1);
     
