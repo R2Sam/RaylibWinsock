@@ -93,7 +93,7 @@ bool Network::SendPacket(char* buffer, int size)
     int tryCount = 0;
     int bytesSent = 0;
 
-    if (size >= packetSize)
+    if (size > packetSize)
     {
         Log("Packet too large");
         return false;
@@ -175,7 +175,7 @@ bool Network::Receive(char* buffer)
 
     // Get size and check
     size_t size = strlen(tempBuffer);
-    if (size >= packetSize)
+    if (size > packetSize)
     {
         delete[] tempBuffer;
         return false;
