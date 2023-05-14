@@ -3,7 +3,7 @@ class Network
 private:
 	// Class variables
 	unsigned int port;
-	int packetSize = 4096;
+	int maxPacketSize = 4096;
 	std::string ip;
 	SOCKET clientSocket;
 
@@ -27,4 +27,7 @@ public:
 	// Transmission buffer
 	bool Send(char* buffer, bool deleteFlag);
 	bool Receive(char* buffer);
+
+	// Packer
+	#include "ClientPacker.h"
 };

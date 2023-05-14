@@ -65,7 +65,7 @@ bool Network::Connect(std::string ip, unsigned int port)
         Log("Connection to " << ip << " at " << port << " is OK");
 
         // Get packet size as first server msg
-        packetSize = std::stoi(ReceivePacket());
+        maxPacketSize = std::stoi(ReceivePacket());
 
         return true;
     }
@@ -93,7 +93,7 @@ bool Network::SendPacket(char* buffer, int size)
     int tryCount = 0;
     int bytesSent = 0;
 
-    if (size > packetSize)
+    if (size > maxPacketSize)
     {
         Log("Packet too large");
         return false;
@@ -123,14 +123,14 @@ char* Network::ReceivePacket()
     // Receive
     Log("--Receive--");
 
-	char* buffer = new char[packetSize + 1];
+	char* buffer = new char[maxPacketSize + 1];
 
-	int bytesRecv = recv(clientSocket, buffer, packetSize, 0);
+	int bytesRecv = recv(clientSocket, buffer, maxPacketSize, 0);
 
 	if (bytesRecv > 0)
     {
         // Check if the received packet exceeds the buffer size
-        if (bytesRecv > packetSize)
+        if (bytesRecv > maxPacketSize)
         {
             delete[] buffer;
             return nullptr;
@@ -156,7 +156,7 @@ bool Network::Send(char* buffer, bool deleteFlag)
     bool result;
 
     // Input buffer size
-    size_t size = strlen(buffer);
+    int size = strlen(buffer);
 
     result = SendPacket(buffer, (int)size);
 
@@ -175,7 +175,7 @@ bool Network::Receive(char* buffer)
 
     // Get size and check
     size_t size = strlen(tempBuffer);
-    if (size > packetSize)
+    if (size >= maxPacketSize)
     {
         delete[] tempBuffer;
         return false;
