@@ -2,7 +2,7 @@
 
 Network::Network()
 {
-    // Init Winsock
+	// Init Winsock
     Log("--Winsock ddl setup--");
 
     WSADATA wsaData;
@@ -65,7 +65,9 @@ bool Network::Connect(std::string ip, unsigned int port)
         Log("Connection to " << ip << " at " << port << " is OK");
 
         // Get packet size as first server msg
-        maxPacketSize = std::stoi(ReceivePacket());
+        char* rec = ReceivePacket();
+        maxPacketSize = std::stoi(rec);
+        delete[] rec;
 
         Log("Max packet size from server: " << maxPacketSize);
 
@@ -125,11 +127,11 @@ char* Network::ReceivePacket()
     // Receive
     Log("--Receive--");
 
-    char* buffer = new char[maxPacketSize + 1];
+	char* buffer = new char[maxPacketSize];
 
-    int bytesRecv = recv(clientSocket, buffer, maxPacketSize, 0);
+	int bytesRecv = recv(clientSocket, buffer, maxPacketSize, 0);
 
-    if (bytesRecv > 0)
+	if (bytesRecv > 0)
     {
         // Check if the received packet exceeds the buffer size
         if (bytesRecv > maxPacketSize)
@@ -180,7 +182,7 @@ bool Network::Receive(char* buffer)
     int size = unpackSize(receiveBuffer);
 
     // Check if input buffer is large enough
-    if (sizeof(buffer) >= size)
+    if (sizeof(buffer) > size)
         {
             Log("Input buffer too small");
             delete[] receiveBuffer;
