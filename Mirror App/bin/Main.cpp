@@ -2,6 +2,8 @@
 #define RAYGUI_IMPLEMENTATION
 
 
+void Listener(Network& Net, Vec2& Ball);
+
 int main(int argc, char *argv[])
 {
     Network Net;
@@ -9,11 +11,13 @@ int main(int argc, char *argv[])
 
     const int screenWidth = 300;
     const int screenHeight = 300;
-    InitWindow(screenWidth, screenHeight, "Mirror App");
+    InitWindow(screenWidth, screenHeight, "Main");
     SetWindowState(FLAG_VSYNC_HINT);
     SetExitKey(KEY_NULL);
 
     SetTargetFPS(30);
+
+    bool listen = true;
 
     Vec2 Ball1;
     Vec2 Ball2;
@@ -24,9 +28,11 @@ int main(int argc, char *argv[])
     Ball2.x = 150;
     Ball2.y = 150;
 
+    std::thread Rec(Listener, std::ref(Net), std::ref(Ball2));
+    Rec.detach();
+
     while(!WindowShouldClose())
     {
-        Log("Ball 1: " << Ball1.x << " " << Ball1.y );
 
         char* buffer = Net.packDataWithHeader(Ball1, "100000000000");
         
@@ -48,10 +54,23 @@ int main(int argc, char *argv[])
         ClearBackground(WHITE);
 
         DrawCircleV(Ball1, 10, RED);
+        DrawCircleV(Ball2, 10, BLUE);
 
         EndDrawing();
     }
 
     Net.Disconnect();
 
+}
+
+void Listener(Network& Net, Vec2& Ball)
+{
+    while(listen)
+    {
+        char recBuffer [50];
+
+        Net.Receive(recBuffer);
+
+        Net.unpackData(recBuffer, Ball, Net.unpackSize(recBuffer));
+    }
 }
