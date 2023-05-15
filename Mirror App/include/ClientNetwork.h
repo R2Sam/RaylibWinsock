@@ -28,6 +28,9 @@ public:
 	bool Send(char* buffer, bool deleteFlag);
 	bool Receive(char* buffer);
 
+	//Other
+	int GetMaxPacketSize();
+
 	// Packer
 	#include "ClientPacker.h"
 };

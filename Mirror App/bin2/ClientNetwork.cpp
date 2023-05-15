@@ -2,7 +2,7 @@
 
 Network::Network()
 {
-	// Init Winsock
+    // Init Winsock
     Log("--Winsock ddl setup--");
 
     WSADATA wsaData;
@@ -125,11 +125,11 @@ char* Network::ReceivePacket()
     // Receive
     Log("--Receive--");
 
-	char* buffer = new char[maxPacketSize + 1];
+    char* buffer = new char[maxPacketSize + 1];
 
-	int bytesRecv = recv(clientSocket, buffer, maxPacketSize, 0);
+    int bytesRecv = recv(clientSocket, buffer, maxPacketSize, 0);
 
-	if (bytesRecv > 0)
+    if (bytesRecv > 0)
     {
         // Check if the received packet exceeds the buffer size
         if (bytesRecv > maxPacketSize)
@@ -192,4 +192,9 @@ bool Network::Receive(char* buffer)
 
     delete[] receiveBuffer;
     return true;
+}
+
+int Network::GetMaxPacketSize()
+{
+    return maxPacketSize;
 }

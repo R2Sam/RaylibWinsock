@@ -193,3 +193,8 @@ bool Network::Receive(char* buffer)
     delete[] receiveBuffer;
     return true;
 }
+
+int Network::GetMaxPacketSize()
+{
+    return maxPacketSize;
+}

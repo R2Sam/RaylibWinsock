@@ -1,10 +1,9 @@
 #include "declarations.h"
 #define RAYGUI_IMPLEMENTATION
 
+void Listener(Network& Net, std::queue<char*>& packetQueue);
 
-void Listener(Network& Net, Vec2& Ball);
-
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     Network Net;
     Net.Connect("127.0.0.1", 1313);
@@ -17,60 +16,68 @@ int main(int argc, char *argv[])
 
     SetTargetFPS(30);
 
-    bool listen = true;
+    std::queue<char*> packetQueue;
+    std::thread Rec(Listener, std::ref(Net), std::ref(packetQueue));
+    Rec.detach();
 
     Vec2 Ball1;
-    Vec2 Ball2;
-
     Ball1.x = 50;
     Ball1.y = 50;
 
-    Ball2.x = 150;
-    Ball2.y = 150;
+    Vec2 Ball2;
+    Ball2.x = 250;
+    Ball2.y = 250;
 
-    std::thread Rec(Listener, std::ref(Net), std::ref(Ball2));
-    Rec.detach();
-
-    while(!WindowShouldClose())
+    while (!WindowShouldClose())
     {
-
         char* buffer = Net.packDataWithHeader(Ball1, "100000000000");
-        
         Net.Send(buffer, 1);
 
         if (IsKeyDown(KEY_UP))
             Ball1.y -= 5;
-
         if (IsKeyDown(KEY_DOWN))
             Ball1.y += 5;
-
         if (IsKeyDown(KEY_RIGHT))
             Ball1.x += 5;
-
         if (IsKeyDown(KEY_LEFT))
             Ball1.x -= 5;
 
         BeginDrawing();
         ClearBackground(WHITE);
 
-        DrawCircleV(Ball1, 10, RED);
         DrawCircleV(Ball2, 10, BLUE);
+        DrawCircleV(Ball1, 10, RED);
+
+        // Process received packets in the queue
+        while (!packetQueue.empty())
+        {
+            char* receivedBuffer = packetQueue.front();
+            // Process the received packet
+            
+            Net.unpackData(receivedBuffer, Ball2, Net.unpackSize(receivedBuffer));
+
+            // Delete the received packet
+            delete[] receivedBuffer;
+            packetQueue.pop();
+        }
 
         EndDrawing();
     }
 
     Net.Disconnect();
-
 }
 
-void Listener(Network& Net, Vec2& Ball)
+void Listener(Network& Net, std::queue<char*>& packetQueue)
 {
-    while(listen)
+    while (true)
     {
-        char recBuffer [50];
-
-        Net.Receive(recBuffer);
-
-        Net.unpackData(recBuffer, Ball, Net.unpackSize(recBuffer));
+        char recBuffer[4096];
+        if (Net.Receive(recBuffer))
+        {
+            // Add the received packet to the queue
+            char* receivedPacket = new char[4096];
+            memcpy(receivedPacket, recBuffer, Net.unpackSize(recBuffer));
+            packetQueue.push(receivedPacket);
+        }
     }
 }
