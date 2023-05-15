@@ -2,7 +2,7 @@
 
 Network::Network(unsigned int userPort)
 {
-	// Init Winsock
+    // Init Winsock
     Log("--Winsock ddl setup--");
 
     WSADATA wsaData;
@@ -109,7 +109,7 @@ char * Network::ReceivePacket(int index)
     // Receive
     //Log("--Receive--");
 
-    char* buffer = new char[maxPacketSize + 1];
+    char* buffer = new char[maxPacketSize];
 
     int bytesRecv;
 
@@ -125,9 +125,6 @@ char * Network::ReceivePacket(int index)
             delete[] buffer;
             return nullptr;
         }
-
-        //
-        buffer[bytesRecv] = '\0';
 
         Log("Bytes received: "<< bytesRecv << " Client: " << clients[index].Socket);
 
@@ -169,7 +166,7 @@ bool Network::SendPacket(SOCKET clientSocket, char* buffer, int size)
             }
             else
             {
-                Log("Error sending packet");
+                Log("Error sending packet to: " << clientSocket << " Error: " << WSAGetLastError());
                 tryCount ++;
             }
         }
@@ -201,9 +198,11 @@ void Network::HandleClient(SOCKET clientSocket)
     // Store client info
     clients[clientIndex].Socket = clientSocket;
 
-    char packetMsg [4095];
-    std::sprintf(packetMsg, "%d", maxPacketSize);
-    SendPacket(clientSocket, packetMsg, sizeof(packetMsg) + 1);
+    // Send MaxPacketSize
+    std::string temp = std::to_string(maxPacketSize);
+    char* maxSize = new char [temp.size()];
+    memcpy(maxSize, temp.data(), temp.size());
+    SendPacket(clientSocket, maxSize, temp.size());
     
     // Send recieved packet to all users except client
     while (true)
@@ -229,7 +228,10 @@ void Network::HandleClient(SOCKET clientSocket)
             for (int i = 0; i <= clients.size() -1; i++)
                 if (i != clientIndex)
                     if (!SendPacket(clients[i].Socket, message, unpackSize(message)))
+                    {
                         Disconnect(i, "Client not found");
+                        return;
+                    }
         }
     }
 
