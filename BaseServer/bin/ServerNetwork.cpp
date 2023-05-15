@@ -227,8 +227,9 @@ void Network::HandleClient(SOCKET clientSocket)
         if(clients.size() > 1)
         {
             for (int i = 0; i <= clients.size() -1; i++)
-                if (i =! clientIndex)
-                    SendPacket(clients[i].Socket, message, unpackSize(message));
+                if (i != clientIndex)
+                    if (!SendPacket(clients[i].Socket, message, unpackSize(message)))
+                        Disconnect(i, "Client not found");
         }
     }
 
