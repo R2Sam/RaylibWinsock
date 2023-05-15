@@ -72,11 +72,11 @@ void Listener(Network& Net, std::queue<char*>& packetQueue)
 {
     while (true)
     {
-        char recBuffer[4096];
+        char recBuffer[Net.GetMaxPacketSize()];
         if (Net.Receive(recBuffer))
         {
             // Add the received packet to the queue
-            char* receivedPacket = new char[4096];
+            char* receivedPacket = new char[Net.GetMaxPacketSize()];
             memcpy(receivedPacket, recBuffer, Net.unpackSize(recBuffer));
             packetQueue.push(receivedPacket);
         }
