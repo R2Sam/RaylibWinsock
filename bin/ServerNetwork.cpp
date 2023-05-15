@@ -113,11 +113,7 @@ char * Network::ReceivePacket(int index)
 
     int bytesRecv;
 
-    {
-        std::lock_guard<std::mutex> lock(clientsMutex);
-
-        bytesRecv = recv(clients[index].Socket, buffer, maxPacketSize, 0);
-    }
+    bytesRecv = recv(clients[index].Socket, buffer, maxPacketSize, 0);
     
     if (bytesRecv > 0)
     {
@@ -132,11 +128,9 @@ char * Network::ReceivePacket(int index)
 
         //
         buffer[bytesRecv] = '\0';
-        {
-            std::lock_guard<std::mutex> lock(clientsMutex);
 
-            Log("Bytes received: "<< bytesRecv << std::endl << "Client: " << clients[index].Socket);
-        }
+        Log("Bytes received: "<< bytesRecv << " Client: " << clients[index].Socket);
+
         return buffer;
     }
     else
@@ -163,11 +157,7 @@ bool Network::SendPacket(SOCKET clientSocket, char* buffer, int size)
         {
             int bytesSent;
 
-            {
-                std::lock_guard<std::mutex> lock(clientsMutex);
-
-                bytesSent = send(clientSocket, buffer, size, 0);
-            }
+            bytesSent = send(clientSocket, buffer, size, 0);
 
             if (bytesSent > 0)
             {
@@ -191,15 +181,11 @@ bool Network::SendPacket(SOCKET clientSocket, char* buffer, int size)
 
 void Network::Disconnect(int index, std::string reason)
 {
-    {
-        std::lock_guard<std::mutex> lock(clientsMutex);
+    Log("Client disconnected: " << clients[index].Socket << " - " << reason << std::endl);
 
-        Log("Client disconnected: " << clients[index].Socket << " - " << reason << std::endl);
-
-        // Client info and socket cleanup
-        closesocket(clients[index].Socket);
-        clients.erase(clients.begin() + index);
-    }
+    // Client info and socket cleanup
+    closesocket(clients[index].Socket);
+    clients.erase(clients.begin() + index);
 }
 
 
@@ -208,12 +194,9 @@ void Network::HandleClient(SOCKET clientSocket)
     // Create instance to store info
     ClientInfo Client;
     int clientIndex;
-    {
-        std::lock_guard<std::mutex> lock(clientsMutex);
 
-        clients.push_back(Client);
-        clientIndex = clients.size() - 1;
-    }
+    clients.push_back(Client);
+    clientIndex = clients.size() - 1;
 
     // Store client info
     clients[clientIndex].Socket = clientSocket;
@@ -236,19 +219,16 @@ void Network::HandleClient(SOCKET clientSocket)
         if (headerDescription[11] == '9')
         {
             Log("Client: " << clientSocket << " requested ping");
-            SendPacket(clientSocket, message, unpackSize(message) + 1);
+            SendPacket(clientSocket, message, unpackSize(message));
             continue;
         }
-        
-        {
-            std::lock_guard<std::mutex> lock(clientsMutex);
 
-            // Send packet to all except client if multiple clients
-            if(clients.size() > 1)
-            {
-                for (int i = 0; i <= clients.size() -1; i++)
-                SendPacket(clients[i].Socket, message, unpackSize(message) + 1);
-            }
+        // Send packet to all except client if multiple clients
+        if(clients.size() > 1)
+        {
+            for (int i = 0; i <= clients.size() -1; i++)
+                if (i =! clientIndex)
+                    SendPacket(clients[i].Socket, message, unpackSize(message));
         }
     }
 

@@ -23,7 +23,7 @@ char* packDataWithHeader(T& data, char* description)
     memcpy(buffer + 4, description, 12);
 
     // Copy te data into the buffer after the complete header
-    memcpy(buffer + 4 + 12, reinterpret_cast<const char*>(&data), dataSize);
+    memcpy(buffer + 4 + 12, (char*)&data, dataSize);
 
     return buffer;
 }
@@ -50,7 +50,7 @@ char* unpackDescription (char* buffer)
 }
 
 template <typename T>
-bool unpackData(char* buffer, T* data, int size)
+bool unpackData(char* buffer, T& data, int size)
 {
     // Size of data
     int dataSize = size - (4 + 12);
@@ -59,7 +59,7 @@ bool unpackData(char* buffer, T* data, int size)
         return false;
 
     // Extract the data from the buffer
-    memcpy((char*)data, buffer + 4 + 12, dataSize);
+    memcpy((char*)&data, buffer + 4 + 12, dataSize);
 
     return true;
 }

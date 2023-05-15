@@ -137,6 +137,7 @@ char* Network::ReceivePacket()
             delete[] buffer;
             return nullptr;
         }
+        Log("Bytes received: " << bytesRecv);
 
         // Add nullbyte
         buffer[bytesRecv] = '\0';
@@ -179,17 +180,15 @@ bool Network::Receive(char* buffer)
     int size = unpackSize(receiveBuffer);
 
     // Check if input buffer is large enough
-    if (strlen(buffer) <= size)
+    if (sizeof(buffer) >= size)
         {
-        delete[] receiveBuffer;
-        return false;
+            Log("Input buffer too small");
+            delete[] receiveBuffer;
+            return false;
         }
 
     // Copy and delete
-    strcpy_s(buffer, size, receiveBuffer);
-
-    // Add nullbyte
-    buffer[size] = '\0';
+    memcpy(buffer, receiveBuffer, size);
 
     delete[] receiveBuffer;
     return true;
