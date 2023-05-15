@@ -1,9 +1,8 @@
 #include "declarations.h"
-#define RAYGUI_IMPLEMENTATION
 
 int main(int argc, char *argv[])
 {
-    Network Server(0);
+    Network Server(1313);
     
     return 0;
 }
